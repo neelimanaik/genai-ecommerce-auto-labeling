@@ -5,6 +5,7 @@ A GenAI-powered auto-labeling system for e-commerce products using LLMs and prom
 **(Hybrid Rules + LLM Architecture | Azure OpenAI)**
 
 **📌 Project Overview**
+
 E-commerce aggregator platforms often struggle with **inconsistent product labeling** due to unstructured seller inputs. This mislabeling leads to poor product discoverability, customer dissatisfaction, and revenue loss.
 
 This project implements a **production oriented GenAI auto-labeling system** that classifies ambiguous product descriptions into:
@@ -17,6 +18,7 @@ Using Azure OpenAI LLMs, the system compares zero-shot and few-shot prompt engin
 Rather than relying solely on LLMs, the system adopts a hybrid architecture (Rules + LLM) to ensure reliability under Azure OpenAI Responsible AI constraints.
 
 **❓ Problem Statement**
+
 The platform currently experiences approximately 27% product mislabeling, particularly between Skin Care and Hair Care categories.
 
 **_Key Challenges_**
@@ -44,18 +46,31 @@ This made **LLM-only approaches unreliable** in practice.
 **🔁 Hybrid Rules + LLM Pipeline**
 
 Product Description
+
         │
+        
         ▼
+
 Rule-Based Classifier
+
         │
+        
         ├── Confident → Final Label (No LLM call)
+        
         │
+        
         └── Ambiguous
+        
                 │
+                
                 ▼
+          
           Azure OpenAI LLM
+          
                 │
+                
                 ├── Allowed → Use Prediction
+                
                 └── Blocked → Safe Fallback
 
 **Why Hybrid?**
@@ -133,24 +148,6 @@ To ensure uninterrupted execution:
   Evaluation pipelines are designed to tolerate model unavailability
 
 This mirrors **real enterprise GenAI systems**, where LLM access is **not guaranteed**.
-
-
-## 🏗️ System Architecture
-
-```mermaid
-flowchart TD
-    A[Product Description] --> B[Rule-Based Classifier]
-
-    B -->|Confident Match| C[Final Category Label]
-
-    B -->|Ambiguous| D[Azure OpenAI LLM Classifier]
-
-    D -->|Allowed by Policy| C
-    D -->|Blocked by Content Filter| E[Safe Fallback Label]
-
-    E --> C
-
-The system prioritizes deterministic rules for high-confidence classifications and falls back to LLM inference only for ambiguous cases. Azure OpenAI content filtering is handled explicitly to ensure uninterrupted pipeline execution.
 
 
 **🧰 Tech Stack**
