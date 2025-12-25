@@ -2,20 +2,21 @@
 A GenAI-powered auto-labeling system for e-commerce products using LLMs and prompt engineering to reduce mislabeling under ambiguous language conditions.
 
 **GenAI-Based Auto-Labeling System for E-Commerce Products**
+**(Hybrid Rules + LLM Architecture | Azure OpenAI)**
 
-**Project Overview**
-E-commerce aggregator platforms often struggle with inconsistent product labeling due to unstructured seller inputs. This mislabeling leads to poor product discoverability, customer dissatisfaction, and revenue loss.
+**📌 Project Overview**
+E-commerce aggregator platforms often struggle with **inconsistent product labeling** due to unstructured seller inputs. This mislabeling leads to poor product discoverability, customer dissatisfaction, and revenue loss.
 
-This project implements a Generative AI (GenAI)–based auto-labeling system that classifies ambiguous product descriptions into:
+This project implements a **production oriented GenAI auto-labeling system** that classifies ambiguous product descriptions into:
 
 Skin Care
 
 Hair Care
 
 Using Azure OpenAI LLMs, the system compares zero-shot and few-shot prompt engineering approaches and evaluates their performance using multiple randomized runs, reporting mean accuracy and standard deviation.
+Rather than relying solely on LLMs, the system adopts a hybrid architecture (Rules + LLM) to ensure reliability under Azure OpenAI Responsible AI constraints.
 
-
-**Problem Statement**
+**❓ Problem Statement**
 The platform currently experiences approximately 27% product mislabeling, particularly between Skin Care and Hair Care categories.
 
 **_Key Challenges_**
@@ -30,234 +31,192 @@ The platform currently experiences approximately 27% product mislabeling, partic
 
 Manual seller education efforts failed, necessitating an automated, intelligent labeling solution.
 
-**Why LLM Based Classification?**
+**🚨 Key Real-World Challenge Discovered**
 
-Traditional ML-based classifiers:
+During experimentation, **Azure OpenAI content filters blocked a significant portion of LLM classification requests**, even though the task was _non-generative and purely classificatory_.
 
-  Require large labeled datasets
-  
-  Perform poorly on semantically ambiguous text
-  
-  Need retraining when categories evolve
+  Retail terms such as body, massage, waist, lip balm, beard oil triggered **medium-severity sexual content filters**.
 
-Given limited labeled data and high linguistic overlap, this project leverages Large Language Models (LLMs) with prompt engineering to:
+This made **LLM-only approaches unreliable** in practice.
 
-  Perform classification without model training
-  
-  Understand semantic context rather than keywords
-  
-  Adapt quickly to ambiguous product descriptions
+**🏗️ Solution Architecture (Enterprise-Grade)**
 
-**Solution Approach**
-
-Use Azure OpenAI GPT models for text classification
-
-Implement zero-shot and few-shot prompting strategies
-
-Enforce deterministic outputs using temperature control
-
-Evaluate performance across multiple randomized sampling runs
-
-Report mean accuracy and standard deviation to capture variability
-
-**System Architecture**
+**🔁 Hybrid Rules + LLM Pipeline**
 
 Product Description
+        │
+        ▼
+Rule-Based Classifier
+        │
+        ├── Confident → Final Label (No LLM call)
+        │
+        └── Ambiguous
+                │
+                ▼
+          Azure OpenAI LLM
+                │
+                ├── Allowed → Use Prediction
+                └── Blocked → Safe Fallback
 
-        ↓
+**Why Hybrid?**
 
-Prompt Construction (Zero-Shot / Few-Shot)
+Rules handle **high-confidence cases deterministically**
 
-        ↓
+LLM handles **semantic ambiguity**
 
-Azure OpenAI LLM
+System remains **functional even when LLM is blocked**
 
-        ↓
+**🧪 Experimental Design**
 
-Category Prediction
+**Classification Strategies Evaluated**
 
-**Tech Stack**
-
-**LLM:** Azure OpenAI (GPT-4o-mini)
-
-**Language:** Python
-
-**Techniques:**
-
-  Prompt Engineering
-  
-  Zero-Shot & Few-Shot Learning
-
-**Libraries:**
-
-  pandas, numpy
-  
-  scikit-learn
-
-**Tools:**
-
-  Google Colab Notebook
-  
-  VS Code
-
-**Project Structure**
-
-genai-ecommerce-auto-labeling/
-
-│
-
-├── src/
-
-│   ├── config.py        # Environment & model configuration
-
-│   ├── llm_client.py    # Azure OpenAI client abstraction
-
-│   ├── prompts.py       # Zero-shot & few-shot prompt builders
-
-│   ├── classifier.py    # Classification logic
-
-│   ├── evaluator.py    # Accuracy evaluation
-
-│   └── experiment.py   # Multi-run experiment orchestration
-
-│
-
-├── utils/
-
-│   └── token_counter.py
-
-│
-
-├── data/
-
-│   └── auto_labelling.csv
-
-│
-
-├── notebooks/
-
-│   └── prompt_experiments.ipynb
-
-│
-
-├── .env.example
-
-├── requirements.txt
-
-└── README.md
-
-
-**Experimental Design**
-
-**Classification Strategies**
-
-| Strategy  | Description                                                        |
-| --------- | ------------------------------------------------------------------ |
-| Zero-Shot | Classification using only instructions and category definitions    |
-| Few-Shot  | Classification using a small set of labeled examples in the prompt |
-
-**Few Shot Sampling**
-
-  Few-shot examples are randomly sampled from the training split
-  
-  Each experimental run uses a different set of few-shot examples
-  
-  This simulates realistic prompt variability
+| Strategy                 | Description                      |
+| ------------------------ | -------------------------------- |
+| Zero-Shot LLM            | Instruction-only classification  |
+| Few-Shot LLM             | Prompt includes labeled examples |
+| **Hybrid (Rules + LLM)** | Rules first, LLM fallback        |
 
 **Evaluation Methodology**
 
-Dataset split into:
+  Dataset split into:
 
-  Example pool (for few-shot prompting)
+    **Rule / few-shot example pool**
+
+    **Gold evaluation set**
+
+  5 randomized evaluation runs
+
+  Metrics reported:
+
+    **Mean accuracy**
+
+    **Standard deviation**
+
+**📊 Results Summary**
+
+| Method                   | Mean Accuracy | Std Dev  | Observations                                  |
+| ------------------------ | ------------- | -------- | --------------------------------------------- |
+| Zero-Shot LLM            | 0.00          | 0.00     | Azure content filtering blocked most requests |
+| Few-Shot LLM             | 0.00          | 0.00     | Longer prompts increased filter failures      |
+| **Hybrid (Rules + LLM)** | **0.625**     | **0.00** | Stable, reliable, production-viable           |
+
+**🔍 Key Observations & Learnings**
   
-  Gold evaluation set
+**LLM-only pipelines can collapse under Responsible AI constraints**
 
-Multiple evaluation runs (e.g., 5 runs)
+Azure OpenAI content filtering applies even to **classification tasks**
 
-Accuracy computed for each run
+Few-shot prompting can **increase filter risk** due to longer prompts
 
-Final metrics reported as:
+Hybrid architectures significantly improve:
 
-  **Mean accuracy**
-  
-  **Standard deviation**
+  Reliability
 
-This approach accounts for **LLM variability** and improves result reliability.
+  Cost efficiency
 
-**Results: Zero-Shot VS Few-Shot**
+  Predictability
 
-| Method    | Mean Accuracy | Standard Deviation |
-| --------- | ------------- | ------------------ |
-| Zero-Shot | ~0.71         | ±0.03              |
-| Few-Shot  | ~0.81         | ±0.02              |
+Deterministic rules reduce LLM dependency and operational risk
 
-**Key Observations**
+**🛡️ Handling Azure OpenAI Content Filtering**
 
-  Few-shot prompting consistently outperformed zero-shot classification
-  
-  Variance across runs was lower with few-shot prompts
-  
-  Minimal domain context significantly improved LLM decision consistency
+To ensure uninterrupted execution:
 
-**How to RUN?**
-1. Install dependencies
-   pip install -r requirements.txt
-2. Create .env file using template below
-    AZURE_OPENAI_KEY=your_key_here
-    AZURE_OPENAI_ENDPOINT=your_endpoint_here
-    AZURE_OPENAI_API_VERSION=2024-12-01-preview
-    AZURE_OPENAI_MODEL=gpt-4o-mini
-3. Run src/main.py
+  LLM calls are wrapped with **fail-safe logic**
 
-**Limitations**
+  When Azure blocks a request:
 
-LLM inference cost at scale
+    The system **does not crash**
 
-Latency compared to traditional classifiers
+    A **safe fallback label ** is applied
 
-Performance depends on prompt quality and example selection
+  Evaluation pipelines are designed to tolerate model unavailability
+
+This mirrors **real enterprise GenAI systems**, where LLM access is **not guaranteed**.
 
 
---==============================================
-**Enterprise-Grade Enhancement: Rules + LLM Hybrid Classifier**
+## 🏗️ System Architecture
 
-To improve reliability, scalability, and safety, the system incorporates a **hybrid classification strategy** commonly used in production GenAI systems.
+```mermaid
+flowchart TD
+    A[Product Description] --> B[Rule-Based Classifier]
 
-**Hybrid Decision Flow**
+    B -->|Confident Match| C[Final Category Label]
 
-  1. **Rule-Based Classification**
+    B -->|Ambiguous| D[Azure OpenAI LLM Classifier]
 
-        Fast, deterministic keyword matching
+    D -->|Allowed by Policy| C
+    D -->|Blocked by Content Filter| E[Safe Fallback Label]
 
-        Handles clear product descriptions
+    E --> C
 
-        Zero LLM cost and zero policy risk
-
-  2. **LLM Fallback**
-
-        Invoked only for ambiguous or noisy inputs
-
-        Uses zero-shot or few-shot prompting
-
-        Ensures semantic understanding where rules fail
-
-**Benefits**
-
-🔻 70–90% reduction in LLM calls
-
-🔻 Azure content-filter failures
-
-🔺 Higher end-to-end accuracy
-
-🔺 Production-grade reliability
-
-**Comparative Evaluation**
-
-| Strategy                 | Mean Accuracy | Std Dev  | Cost | Reliability |
-| ------------------------ | ------------- | -------- | ---- | ----------- |
-| Zero-Shot LLM            | ~0.71         | ±0.03    | High | Medium      |
-| Few-Shot LLM             | ~0.81         | ±0.02    | High | Medium      |
-| **Hybrid (Rules + LLM)** | ⭐ Highest   | ⭐ Lowest | Low  | High        |
+The system prioritizes deterministic rules for high-confidence classifications and falls back to LLM inference only for ambiguous cases. Azure OpenAI content filtering is handled explicitly to ensure uninterrupted pipeline execution.
 
 
-This mirrors real-world enterprise GenAI deployments.
+**🧰 Tech Stack**
+
+**LLM**
+
+  Azure OpenAI (GPT-4o-mini)
+
+**Language**
+
+  Python
+
+**Techniques**
+
+  Prompt Engineering
+
+  Zero-Shot & Few-Shot Learning  
+
+  Hybrid Rule-Based Systems
+
+**Libraries**
+
+  pandas
+
+  numpy
+
+  scikit-learn
+
+  tqdm
+
+  python-dotenv
+
+**📁 Project Structure**
+src/
+├── config/          # Environment & Azure OpenAI configuration
+├── llm/             # Prompt engineering & LLM client
+├── rules/           # Deterministic rule-based classifier
+├── classifiers/     # LLM-only & hybrid classifiers
+├── evaluation/      # Accuracy & metric computation
+├── utils/           # Token counting & sampling utilities
+├── experiments/     # Experiment orchestration
+
+**▶️ How to Run**
+
+pip install -r requirements.txt
+python -m src.experiments.run_experiments
+
+
+Ensure .env contains:
+
+AZURE_OPENAI_KEY=...
+AZURE_OPENAI_ENDPOINT=...
+AZURE_OPENAI_API_VERSION=2024-12-01-preview
+AZURE_OPENAI_MODEL=gpt-4o-mini
+
+**🎯 Why This Project Matters**
+
+This project demonstrates:
+
+  Real-world GenAI limitations (not just ideal demos)
+
+  Production-safe system design
+
+  Hybrid AI architecture thinking
+
+  Responsible AI-aware engineering
+
+  Honest evaluation under constraints
+
