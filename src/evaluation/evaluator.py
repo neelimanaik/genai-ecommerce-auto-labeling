@@ -5,20 +5,28 @@ from sklearn.metrics import accuracy_score
 from src.classifiers.llm_classifier import classify_zero_shot, classify_few_shot
 import json
 from src.classifiers.hybrid_classifier import classify_hybrid
-print("sklearn works")
+#print("sklearn works")
 
 def evaluate_hybrid(gold_examples, examples=None):
-    predictions, labels = [], []
-
+    predictions, labels, records = [], [], []
+    SAFE_FALLBACK = "Manual Review"   # or "Hair Care" / "Manual Review"
     for gold_ex in json.loads(gold_examples):
         pred = classify_hybrid(
             gold_ex["Product Description"],
             examples
         )
+        if pred is None:
+            pred = SAFE_FALLBACK
+        records.append({"description": gold_ex["Product Description"],
+                        "gold_label": gold_ex["Category"],
+                        "predicted_label": pred,
+                        "correct": pred.strip().lower() == gold_ex["Category"].strip().lower()})
+        
         predictions.append(pred.strip().lower())
         labels.append(gold_ex["Category"].strip().lower())
+    accuracy = accuracy_score(labels, predictions)
 
-    return accuracy_score(labels, predictions)
+    return accuracy, records
 
 def evaluate(classify_fn, gold_examples, examples=None):
     """
@@ -35,7 +43,7 @@ def evaluate(classify_fn, gold_examples, examples=None):
         accuracy (float): Accuracy computed by comparing model predictions
                                 with ground truth
     """
-    predictions, labels = [], []
+    predictions, labels, records = [], [], []
     SAFE_FALLBACK = "Manual Review"   # or "Hair Care" / "Manual Review"
     for gold_ex in json.loads(gold_examples):
         if examples:
@@ -48,5 +56,12 @@ def evaluate(classify_fn, gold_examples, examples=None):
             
         predictions.append(pred.strip().lower())
         labels.append(gold_ex["Category"].strip().lower())
+        records.append({"description": gold_ex["Product Description"],
+                        "gold_label": gold_ex["Category"],
+                        "predicted_label": pred,
+                        "correct": pred.strip().lower() == gold_ex["Category"].strip().lower()})
+        
+    accuracy = accuracy_score(labels, predictions)
 
-    return accuracy_score(labels, predictions)
+
+    return accuracy, records

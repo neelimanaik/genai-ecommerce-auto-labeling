@@ -31,11 +31,17 @@ if __name__ == "__main__":
     examples = create_examples(examples_df)
     hybrid_performance = []
 
-    hybrid_accuracy = evaluate_hybrid(gold_examples, examples)
+    hybrid_accuracy, hybrid_records = evaluate_hybrid(gold_examples, examples)
     hybrid_performance.append(hybrid_accuracy)
     print("Mean Hybrid accuracy:", np.array(hybrid_performance).mean())
     print("Std Hybrid accuracy:", np.array(hybrid_performance).std())
+    
+    os.makedirs("outputs", exist_ok=True)
 
+    df = pd.DataFrame(hybrid_records)
+    df.to_csv("outputs/hybrid_predictions.csv", index=False)
+
+    print("Saved predictions to outputs/hybrid_predictions.csv")
 
     few_shot_performance, zero_shot_performance = [], []
     num_eval_runs = 5
@@ -46,8 +52,8 @@ if __name__ == "__main__":
         examples = create_examples(examples_df)
 
         # Evaluate prompt accuracy on gold examples
-        few_shot_accuracy =  evaluate(classify_few_shot, gold_examples,examples)
-        zero_shot_accuracy =  evaluate(classify_zero_shot, gold_examples)
+        few_shot_accuracy, few_shot_records =  evaluate(classify_few_shot, gold_examples,examples)
+        zero_shot_accuracy, zero_shot_records =  evaluate(classify_zero_shot, gold_examples)
 
         few_shot_performance.append(few_shot_accuracy)
         zero_shot_performance.append(zero_shot_accuracy)
@@ -60,3 +66,17 @@ if __name__ == "__main__":
 
     print("Standard Deviation of Few-shot accuracy over", num_eval_runs, "runs:", np.array(few_shot_performance).std())
     print("Standard Deviation of Zero-shot accuracy over", num_eval_runs, "runs:", np.array(zero_shot_performance).std())
+
+    os.makedirs("outputs", exist_ok=True)
+
+    df = pd.DataFrame(few_shot_records)
+    df.to_csv("outputs/few_shot_predictions.csv", index=False)
+
+    print("Saved predictions to outputs/few_shot_predictions.csv")
+
+    os.makedirs("outputs", exist_ok=True)
+
+    df = pd.DataFrame(zero_shot_records)
+    df.to_csv("outputs/zero_shot_predictions.csv", index=False)
+
+    print("Saved predictions to outputs/zero_shot_predictions.csv")

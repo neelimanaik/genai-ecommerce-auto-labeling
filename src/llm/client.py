@@ -25,6 +25,6 @@ def call_llm(messages, temperature=0, max_tokens=4):
             max_tokens=max_tokens
         )
     except Exception as e:
-        print("⚠️ LLM blocked or failed:", e)
-    return None
+        #print("⚠️ LLM blocked or failed:", e)
+        return None
     return response.choices[0].message.content.strip()

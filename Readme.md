@@ -150,6 +150,18 @@ To ensure uninterrupted execution:
 
 This mirrors **real enterprise GenAI systems**, where LLM access is **not guaranteed**.
 
+## Prediction Outputs
+
+In addition to aggregate accuracy metrics, the system outputs sample-level predictions including:
+
+- Original product description
+- Gold label
+- Predicted label
+- Correctness flag
+
+These outputs enable error analysis and manual review, which are
+critical for real-world catalog automation systems.
+
 
 **🧰 Tech Stack**
 
